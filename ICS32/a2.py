@@ -415,11 +415,11 @@ def error():
 
 
 # Start loop
-while True:
-    if __name__ == '__main__':
-        user_input = input()
-        if(user_input == ''):
-            continue
-        process_input(user_input+" ")
+#while True:
+#    if __name__ == '__main__':
+#        user_input = input()
+#        if(user_input == ''):
+#            continue
+#        process_input(user_input+" ")
 
     
