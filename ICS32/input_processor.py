@@ -45,11 +45,15 @@ def start():
         print("\nPlease choose a valid option\n")
 
 
+# This method will use methods in a2 to create a profile
 def create_profile():
     pass
 
+
+# This method will use methods in a2 to open a profile
 def open_profile():
     pass
+
 
 # This method will facilitate admin mode
 def admin_mode():
