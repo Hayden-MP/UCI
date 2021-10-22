@@ -145,6 +145,7 @@ def options(query):
 # Responsible for making changes to Profile posts
 def profile_options(query):
     pass
+    
 
 # O command opens an existing .dsu file 
 def o_command(query):
@@ -315,21 +316,32 @@ def validate(query) -> bool:
 
 # Validates E and P queries
 def validate_profile(query):
-    valid = False
+    valid = True
     options = ['-usr', '-pwd', '-bio', '-addpost', '-delpost',
                '-posts', '-post', '-all']
 
+    # First check to see if second element is even an option
+    if(query[1] not in options):
+        return False
+    
     for o in options:
         if o in query: # Check to see if the options even exist
 
            # Only E command can be used with -addpost and -delpost
+            if (query[0] == "P" and (o == options[3] or o == options[4])):
+                valid = False
 
            # Only P command can be used with -posts, -post, and -all
+            elif (query[0] == "E" and (o == options[5] or o == options[6]
+                                     or o == options[7])):
+                valid = False
 
-           # -all should be standalone, if not.. ignore other options
-            
-            valid = True
+           # -all should be standalone
+            elif (len(query) > 2 and o == options[7]):
+                valid = False
 
+            else:
+                valid = True
     
     return valid
     
