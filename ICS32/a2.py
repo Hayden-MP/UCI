@@ -84,13 +84,15 @@ def profile_actions():
         
     elif(choice == "3"):
         edit_profile()
+        profile_actions()
 
     elif(choice == "4"):
-        edit_posts()           
+        edit_posts()
+        profile_actions()
 
     elif(choice == "6"):
-        print("You picked SHOW PROFILE INFO")
-
+        print_profile()
+        profile_actions()
 
     elif(choice.upper() == "Q"):
         sys.exit()
@@ -105,7 +107,60 @@ def profile_actions():
 # This method will print/display any information in a Profile,
 # using the P command in input_processor
 def print_profile():
-    pass
+    global admin
+    
+    print("\nWhat would you like to show in your Profile?")
+    print("Enter the number based on your choice:\n")
+    print("1 - Username")
+    print("2 - Password")
+    print("3 - Bio")
+    print("4 - Specific Post")
+    print("5 - All Posts")
+    print("6 - Everything")
+
+    choice = input()
+
+    if(choice == 'admin'):
+        admin = True
+        print("\n** admin mode activated **\n")
+        return
+        
+    elif(choice == "1"):
+        print("Current username: ")
+        input_processor.process_input("P -usr ")
+
+    elif(choice == "2"):
+        print("Current password: ")
+        input_processor.process_input("P -pwd ")
+        
+    elif(choice == "3"):
+        print("Current bio: ")
+        input_processor.process_input("P -bio ")
+
+    elif(choice == "4"):
+        try:
+            post = int(input("Enter the ID number for the post: "))
+            input_processor.process_input("P -post " + post + " ")
+        except TypeError:
+            print("\nPlease only enter an integer value for the ID")
+            print_profile()
+        
+    elif(choice == "5"):
+        print("All posts: ")
+        input_processor.process_input("P -posts ")
+        
+    elif(choice == "6"):
+        print("All info: ")
+        input_processor.process_input("P -all ")
+
+    elif(choice.upper() == "Q"):
+        sys.exit()
+        
+    else:
+        print("\nPlease choose a valid option\n")
+        print_profile()
+
+    return
 
     
 # This method will be able to change any information in a Profile,
@@ -191,9 +246,9 @@ def create_profile():
     path = input("Path to store profile: ")
 
     if(valid_path(path)):    
-        name = input("Name of Profile: ")
+        name = input("\nName of Profile: ")
         input_processor.process_input(f"C {path} -n {name} ") 
-        print("Profile created")
+        print("\nProfile created")
 
 
 # This method will use methods in input_processor to open a profile
