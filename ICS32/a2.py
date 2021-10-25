@@ -37,11 +37,9 @@ def start():
         return
         
     elif(choice == "1"):
-        print("\nYou picked CREATE A PROFILE")
         create_profile() 
         
     elif(choice == "2"):
-        print("\nYou picked OPEN A PROFILE")
         open_profile()
 
     elif(choice.upper() == "Q"):
@@ -58,6 +56,9 @@ def start():
 # Once the profile has been created, we can now edit the contents
 def profile_actions():
     global admin
+
+    if(admin):
+        return
     
     print("\nWhat would you like to do with your Profile?")
     print("Enter the number based on your choice:\n")
@@ -65,7 +66,7 @@ def profile_actions():
     print("2 - Open a different Profile")
     print("3 - Edit Profile")
     print("4 - Edit Posts")
-    print("6 - Show Profile information\n")
+    print("5 - Show Profile information\n")
 
     choice = input()
 
@@ -90,7 +91,7 @@ def profile_actions():
         edit_posts()
         profile_actions()
 
-    elif(choice == "6"):
+    elif(choice == "5"):
         print_profile()
         profile_actions()
 
@@ -139,7 +140,7 @@ def print_profile():
 
     elif(choice == "4"):
         try:
-            post = int(input("Enter the ID number for the post: "))
+            post = input("Enter the ID number for the post: ")
             input_processor.process_input("P -post " + post + " ")
         except TypeError:
             print("\nPlease only enter an integer value for the ID")
@@ -218,16 +219,17 @@ def edit_posts():
         
     elif(choice == "1"):
         post = input("\nPlease enter your new post: ")
-        print("POST: ", f"{post}")
-        input_processor.process_input(f"E -addpost \"{post}\"")
+        input_processor.process_input("E -addpost " + post + " ")
+        print("Post added: ", post)
+
 
     elif(choice == "2"):
         print("\nAll posts: ")
         input_processor.process_input("P -posts ")
         print("\nPlease enter the number of your post to delete it:")
         try:
-            post_index = int(input())
-            input_processor.process_input(f"E -delpost {post_index} ")
+            post_index = input()
+            input_processor.process_input(f"E -delpost " + post_index + " ")
         except TypeError:
             print("Only enter an integer value associated with the post.")
             edit_posts()

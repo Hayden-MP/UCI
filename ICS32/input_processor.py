@@ -14,7 +14,6 @@ from pathlib import Path
 import sys
 import os
 from Profile import Profile, Post, DsuFileError, DsuProfileError
-#from Profile import Post
 
 
 # Global user profile to access contents of current Profile object
@@ -26,16 +25,16 @@ current_path = ''
 def r_option(path):
     directories, contents = [], []
 
-    for p in path.iterdir():             # Iterates through path elements
+    for p in path.iterdir():            
         if p.is_file():                   
-            contents.append(p)           # Element is file, add to contents list
+            contents.append(p)           
         elif p.is_dir():
-            directories.append(p)        # Element is dir, add to directories
+            directories.append(p)        
 
-    if(len(directories) != 0):           # Go through all directories found
+    if(len(directories) != 0):           
         for d in directories:
-            contents.append(d)                  # Add directory name to contents
-            contents.extend(r_option(Path(d)))  # Continue to traverse directories
+            contents.append(d)                  
+            contents.extend(r_option(Path(d)))  
 
     return contents
 
@@ -195,7 +194,7 @@ def bio_option(query, command, string):
 
 # addpost only accepts E command, will edit a post based on string param
 def addpost_option(query, string):
-    global current_user
+    global current_user, current_path
     current_user.add_post(string)
 
     try:
@@ -207,11 +206,11 @@ def addpost_option(query, string):
 
 # delpost only accepts E command, will delete a post based on string index
 def delpost_option(query, string):
-    global current_user
+    global current_user, current_path
 
     try:
         current_user.del_post(int(string)) # NEED TO TEST FOR INT VALUE
-        #current_user.save_profile(current_path)
+        current_user.save_profile(current_path)
         print(f"Deleted post: {string}")
     except DsuFileError as e:
         print(e)
@@ -229,10 +228,14 @@ def posts_option(query):
 
 
 # posts only accept P command, will print post at string index
-def post_option(query, command, string):
+def post_option(query, index):
     global current_user
     posts = current_user.get_posts()
-    print(string, ": ", posts[p])
+    try:
+        print(index, ": ", posts[index])
+    except IndexError:
+        error()
+        return
     
 
 # all only accepts P command, will print everything in profile object
@@ -247,7 +250,7 @@ def all_option(query):
 # Responsible for making changes to Profile posts
 # ASSUMES QUERY IS VALID AND ACCURATE - CHECKS DONE IN VALIDATE_PROFILE
 def profile_options(query):
-
+    global current_user, current_path
     command = query[0]
 
     for e in query:
@@ -273,7 +276,7 @@ def profile_options(query):
                 bio_option(query, command, string)
             
         if e == "-addpost":
-            if len(query) < 3: # SHOULD MOVE TO VALIDATE_PROFILE
+            if len(query) < 3: 
                 error()
                 return
          
@@ -281,7 +284,7 @@ def profile_options(query):
             addpost_option(query, Post(entry=string))
             
         if e == "-delpost":
-            if len(query) < 3: # SHOULD MOVE TO VALIDATE_PROFILE
+            if len(query) < 3: 
                 error()
                 return
             
@@ -292,12 +295,12 @@ def profile_options(query):
             posts_option(query)
             
         if e == "-post":
-            if len(query) < 3: # SHOULD MOVE TO VALIDATE_PROFILE
+            if len(query) < 3: 
                 error()
                 return
             
             string = query[query.index(e) + 1]
-            post_option(query, string)
+            post_option(query, int(string))
             
         if e == "-all":
             all_option(query)
@@ -308,11 +311,15 @@ def profile_options(query):
 def o_command(query):
     global current_user, current_path
     current_path = query[1]
-    try:
-        current_user.load_profile(query[1]) # Will need to change this later
-        print("Profile loaded for: ", f"{current_user.username}")
-    except DsuProfileError as e:
-        print(e)
+    if(current_path.suffix != '.dsu'):
+        error()
+        return
+    else:
+        try:
+            current_user.load_profile(query[1]) 
+            print("Profile loaded for: ", f"{current_user.username}")
+        except (DsuFileError, DsuProfileError) as e:
+            print("Profile does not exist!")
 
 
 # R command reads contents of a file
@@ -320,15 +327,15 @@ def r_command(query):
     global current_user, current_path
     current_path = path = query[1]
     
-    if(path.suffix != '.dsu'):                  # Cannot open non .dsu files
+    if(path.suffix != '.dsu'):          
         error()
         return
     else:
-        if(os.path.getsize(path) == 0):         # If .dsu is empty       
-            print("EMPTY", end='')              # print empty
-        else:                                   # Else, it is not empty
+        if(os.path.getsize(path) == 0):               
+            print("EMPTY")             
+        else:                                   
             try:
-                print(path.read_text())         # Will read text from .dsu
+                print(path.read_text())         
             except FileNotFoundError as fnfe:
                 error()
                 return
@@ -351,7 +358,6 @@ def d_command(query):
 def c_command(query):
     global current_path
     path = query[1]
-    # EXTENDING C COMMAND FOR a2
     usrnm = input("Username: ")
     pw = input("Password: ")
 
@@ -363,7 +369,7 @@ def c_command(query):
     
     filename = n_option(query)                  # Get filename from -n
     current_path = Path(path).joinpath(filename)
-    Path(current_path).touch()                      # Create file at path location
+    Path(current_path).touch()                  # Create file at path location
 
     try:
         current_user.save_profile(current_path)
@@ -488,10 +494,16 @@ def validate(query) -> bool:
 
 # Validates E and P queries
 def validate_profile(query):
+    global current_user, current_path
     valid = True
     options = ['-usr', '-pwd', '-bio', '-addpost', '-delpost',
                '-posts', '-post', '-all']
-    # First check to see if second element is even an option
+
+    # Check to see if we even have an existing profile
+    if(current_user.username == None or current_path == ' '):
+        return False
+    
+    # check to see if second element is even an option
     if(query[1] not in options):
         return False
     
@@ -523,8 +535,6 @@ def parse_profile(input_parts, user_input, command):
     quotes_toggle = False
 
     for char in user_input:
-        # print(char, end="")
-
         # Toggle quotes to gather strings
         if char == "\"" and quotes_toggle == False:
             quotes_toggle = True
@@ -553,7 +563,7 @@ def parse_profile(input_parts, user_input, command):
         if len(strings) == len(options):
             query.append(strings[i])
         
-    print("QUERY: ", query)
+    #print("QUERY: ", query)
     return query
 
 
