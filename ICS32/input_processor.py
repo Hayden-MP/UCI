@@ -93,7 +93,15 @@ def n_option(query):
     if(query[0] != 'C'):
         return
     filename = query[3]
-    filename = filename[1:]+".dsu"
+    if filename != '':
+        if filename[0] == '/':
+            filename = filename[1:]+".dsu"
+        else:
+            filename = filename + ".dsu"
+    else:
+        error()
+        return
+
     return filename
     
 
@@ -195,6 +203,7 @@ def bio_option(query, command, string):
 # addpost only accepts E command, will edit a post based on string param
 def addpost_option(query, string):
     global current_user, current_path
+
     current_user.add_post(string)
 
     try:
@@ -223,8 +232,13 @@ def delpost_option(query, string):
 def posts_option(query):
     global current_user
     posts = current_user.get_posts()
-    for p in posts:
-        print(posts.index(p), ": ", p)
+    if len(posts) == 0:
+        print("No posts found!")
+    else:    
+        for p in posts:
+            print(posts.index(p), ": ", p['entry'])
+
+    return posts
 
 
 # posts only accept P command, will print post at string index
@@ -233,7 +247,8 @@ def post_option(query, index):
     posts = current_user.get_posts()
     try:
         print(index, ": ", posts[index])
-    except IndexError:
+        return posts[index]
+    except (IndexError, TypeError) as e:
         error()
         return
     
@@ -378,7 +393,8 @@ def c_command(query):
 
     
     print(str(current_path))                        # Print the new path to file
-        
+    return str(current_path)
+       
 
 # L command will list the contents of the user specified directory
 def l_command(query):
@@ -432,7 +448,7 @@ def process_input(user_input) -> list:
             input_parts.append(segment)
 
     query = parse(input_parts, user_input)
-
+    
     # check if profile commands before file system commands
     if query[0] == 'E' or query[0] == 'P':
 
@@ -660,7 +676,7 @@ def parse(input_parts: list, user_input: str):
         query.insert(3,'')              
                                         
     if(query[3] == '/'):            
-        query[3] = ''                   # If input2 is just a /, that means its empty
+        query[3] = ''        # If input2 is just a /, that means its empty
                                         
     return query
 

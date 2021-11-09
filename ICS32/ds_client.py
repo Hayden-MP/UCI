@@ -14,42 +14,41 @@ import ds_protocol
 import json
 import time
 
-# a3 calls this send method after collecting info
-# We should gather certain info in different methods?
 
+# Send function sends the dsu file information to the DSP server
 def send(server:str, port:int, username:str, password:str, message:str, bio:str=None):
-  '''
-  The send function joins a ds server and sends a message, bio, or both
 
-  :param server: The ip address for the ICS 32 DS server.
-  :param port: The port where the ICS 32 DS server is accepting connections.
-  :param username: The user name to be assigned to the message.
-  :param password: The password associated with the username.
-  :param message: The message to be sent to the server.
-  :param bio: Optional, a bio for the user.
-  '''
-
+  if not valid_ip(server): # If valid_ip returns FALSE, run this 
+    print("Invalid IP! Try again.")
+    return
+  
   HOST = server
   PORT = port
 
   with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
 
     json_dict = join(HOST, PORT, client, username, password)
-    print("JSON_DICT from DS_CLIENT: ", json_dict)
+    check_errors(json_dict)
 
     post_response = post(json_dict, client, message)
-    print("POST_RESPONSE from DS_CLIENT: ", post_response)
+    check_errors(post_response)
 
     if bio != None:
       bio_response = bio_post(json_dict, client, bio)
-      print("BIO_RESPONSE from DS_CLIENT: ", bio_response)
+      check_errors(bio_response)
+
 
 
 # Function to facilitate joining the server
 def join(HOST, PORT, client, username, password):
-  
   # Connect to our server here
-  client.connect((HOST, PORT))
+  try:
+    client.connect((HOST, PORT))
+    
+  except (socket.gaierror, TimeoutError) as e:
+    print("There was a problem connecting to the IP, please try again.")
+    return 
+      
   print(f"Client connected to {HOST} on {PORT}") # Confirm connection
 
   # SEND THE DATA
@@ -58,9 +57,6 @@ def join(HOST, PORT, client, username, password):
   # RECIEVE RESPONSE
   data = client.recv(1024) # Data recieved from server is in bytes
 
-  # PRINT DECODED DATA (STRING)
-  print(data.decode())
-
   # GET THE JSON OBJECT AS A DICT
   json_dict = ds_protocol.extract_json(data.decode())
 
@@ -68,31 +64,64 @@ def join(HOST, PORT, client, username, password):
 
 
 
-# SHOULD THESE BE IN DS_PROTOCOL?? VVV
-
 # Function to facilitate a post to the server
 def post(json_dict, client, message):
-    post = {"token": json_dict['response']['token'], "post": {"entry": message, "timestamp": time.time()}}
-    client.sendall(json.dumps(post).encode())
-    data = client.recv(1024)
-    return data.decode()
+    try:
+      post = {"token": json_dict['response']['token'], "post": {"entry": message, "timestamp": time.time()}}
+      client.sendall(json.dumps(post).encode())
+      data = client.recv(1024)
+
+      json_dict = json.loads(data.decode())
+      
+    except (TypeError, json.JSONDecodeError) as e:
+      return
+    
+    return json_dict
 
 
 # Function to facilitate sending a bio to the server
 def bio_post(json_dict, client, bio):
+  try:
     bio = {"token": json_dict['response']['token'], "bio": {"entry": bio, "timestamp": ""}}
     client.sendall(json.dumps(bio).encode())
     data = client.recv(1024)
-    return data.decode()
+
+    json_dict = json.loads(data.decode())
+    
+  except (TypeError, json.JSONDecodeError) as e:
+    return
+  
+  return json_dict
 
 
-# This will handle any error that is returned from the join, post, or bio commands
-def handle_errors(json_dict):
-  response = json_dict['response']['type']
+# Will print error if data recieved gives us an errror
+def check_errors(response_data: dict):
 
-  if response == 'error':
-    print("ERROR CAUGHT")
+  if response_data == None:
+    print("There was a problem with your request! Try again.")
+    return
+  
+  response = response_data['response']['type']
 
+  if response != 'ok':
+    print("Error in DSP protocol -> ", response_data['response']['message'])
+  
+
+# Will check if the ip is in correct format
+# all it really does is check to see if its only numbers
+def valid_ip(ip:str) -> bool:
+
+  ip_list = ip.split('.')
+  for e in ip_list:
+    try:
+      temp = int(e)
+      if len(e) > 3 or len(e) == 0:
+        return False
+      
+    except (TypeError, ValueError) as e:
+      return False
+
+  return True
 
 
               
