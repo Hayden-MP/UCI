@@ -1,6 +1,10 @@
 import urllib, json
 from urllib import request, error
 from OpenWeather import OpenWeather
+from LastFM import LastFM
+from ExtraCreditAPI import ExtraCreditAPI
+from WebAPI import WebAPI
+
 
 # Open weather API key : 9ccb0ef809ff98bdefababd7b3cc4dc4
 
@@ -38,6 +42,15 @@ def process() -> None:
         print("\nComplete object:\n")
         print(weather_obj)
 
+
+def test_api(message:str, apikey:str, webapi:WebAPI):
+    webapi.set_apikey(apikey)
+    webapi.load_data()
+    result = webapi.transclude(message)
+    print(result)
+
+
+
 def main():
     #apikey = input("Enter your API key: ")
     #zip = input("Enter your ZIP code: ")
@@ -46,7 +59,7 @@ def main():
     #weather_obj = OpenWeather(zip, ccode, apikey)
     #obj = OpenWeather.load_data(weather_obj)
     #print(obj)
-
+    '''
     zipcode = "92697"
     ccode = "US"
     apikey = "9ccb0ef809ff98bdefababd7b3cc4dc4"
@@ -62,6 +75,21 @@ def main():
     print(f"The current weather for {zipcode} is {open_weather.description}")
     print(f"The current humidity for {zipcode} is {open_weather.humidity}")
     print(f"The sun will set in {open_weather.city} at {open_weather.sunset}")
+    '''
+
+
+    open_weather = OpenWeather() #notice there are no params here...HINT: be sure to use parameter defaults!!!
+    lastfm = LastFM()
+    extracredit = ExtraCreditAPI()
+
+    test_api("Testing the weather: @weather", '9ccb0ef809ff98bdefababd7b3cc4dc4', open_weather)
+    # expected output should include the original message transcluded with the default weather value for the @weather keyword.
+
+    test_api("Testing lastFM: @lastfm", '79283ba46a968f8b769e2a0ea296a94a', lastfm)
+    # expected output include the original message transcluded with the default music data assigned to the @lastfm keyword
+
+    test_api("Testing ExtraCreditAPI: @extracredit", 'f6b507f4ef2f47779f641d690fc7d8e4', extracredit)
+    # expected output include the original message transcluded with the default music data assigned to the @lastfm keyword
 
 
 

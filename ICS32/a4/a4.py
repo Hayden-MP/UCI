@@ -9,6 +9,8 @@
 # 56169764
 
 
+from ExtraCreditAPI import ExtraCreditAPI
+from LastFM import LastFM
 import ds_client
 import json
 from pathlib import Path
@@ -33,9 +35,9 @@ def start():
 
     choice = input().strip()
 
+    # CREATE PROFILE
     if choice == '1':
 
-        # CREATE PROFILE
         path = input("Please enter the path you wish to save your profile: ").strip()
         if not Path(path).exists():
             print("Invalid path! Please try again.")
@@ -51,6 +53,8 @@ def start():
             print("Name cannot be empty!")
             start()
     
+
+    # LOAD PROFILE
     elif choice == '2':
 
         # LOAD PROFILE
@@ -62,9 +66,9 @@ def start():
 
         input_processor.process_input("O " + profile_path + " ")
 
-    elif choice == '3':
 
-        # QUIT PROGRAM
+    # QUIT PROGRAM
+    elif choice == '3':
         sys.exit()
     
     else:
@@ -110,11 +114,17 @@ def process_posts():
     print("4 -- Update bio online\n")
     choice = input().strip()
     
+    # CREATE A POST
     if choice == '1':
-
-        # CREATE A POST
         print("Start typing your post and press enter to submit:\n")
         post = input().strip()
+
+        '''
+        All the below conditionals have to do with transclusion of the keywords
+            - @openweather
+            - @lastfm
+            - @extracredit
+        '''
 
         # Post contains @weather keyword
         if "@weather" in post:
@@ -133,23 +143,40 @@ def process_posts():
                 # USE DEFAULT VALUES
                 post = OpenWeather().transclude(post)
 
+
         # post contains @lastfm keyword
         if "@lastfm" in post:
-            print("LastFM Keyword Present")
+            input_artist = input("Enter the music artist you would like more info about: ")
+
+            if len(answer) != 0:
+                lastfm = LastFM(artist=input_artist)
+                lastfm.load_data()
+                post = lastfm.transclude(post)
+        
+
+        # post contains @extracredit keyword
+        if "@extracredit" in post:
+            input_topic = input("Enter the topic you would like to search in the news: ")
+
+            if len(input_topic) != 0:
+                extracredit = ExtraCreditAPI(keyword=input_topic.replace(' ', ''))
+                extracredit.load_data()
+                post = extracredit.transclude(post)
+
 
         input_processor.process_input("E -addpost " + f'"{post}"' + " ")
         print("Post added: ", post)
         process_posts()
     
-    elif choice == '2':
 
-        # LIST POSTS
+    # LIST POSTS
+    elif choice == '2':
         input_processor.process_input("P -posts " + " ")
         process_posts()
 
-    elif choice == '3':
 
-        # SEND POST TO SERVER
+    # SEND POST TO SERVER
+    elif choice == '3':
         HOST = input("Enter the IP address of your server: ")
         post_index = input("Enter the index number of the post you would like to send: ").strip()
         json_dsu['dsuserver'] = HOST
@@ -170,9 +197,9 @@ def process_posts():
         
         process_posts()
 
-    elif choice == '4':
 
-        # UPDATE BIO AND SEND
+    # UPDATE BIO AND SEND
+    elif choice == '4':
         HOST = input("Enter the IP address of your server: ")
         print("Enter below your updated bio: ")
 
