@@ -51,20 +51,16 @@ class Body(tk.Frame):
     NOTE: This method is useful for clearing the widget, just pass an empty string.
     """
     def set_text_entry(self, text:str):
-        # TODO: Write code to that deletes all current text in the self.entry_editor widget
-        # and inserts the value contained within the text parameter.
-        pass
+        self.entry_editor.insert(0.0, text)
+        
     
     """
     Populates the self._posts attribute with posts from the active DSU file.
     """
     def set_posts(self, posts:list):
-        # TODO: Write code to populate self._posts with the post data passed
-        # in the posts parameter and repopulate the UI with the new post entries.
-        # HINT: You will have to write the delete code yourself, but you can take 
-        # advantage of the self.insert_posttree method for updating the posts_tree
-        # widget.
-        pass
+        self._posts = posts
+        for post in self._posts:
+            self._insert_post_tree(len(self._posts), post)
 
     """
     Inserts a single post to the post_tree widget.
@@ -198,16 +194,22 @@ class MainApp(tk.Frame):
         # into the root frame
         self._draw()
 
+        # The "flag" that checks whether a user wants to submit a post to the server by 
+        # looking at the checkmark in the checkbox
+        self._is_online = False
+
+        # Keeps track of location of file 
+        self._profile_filename = False
+
     """
     Creates a new DSU file when the 'New' menu item is clicked.
     """
     def new_profile(self):
         filename = tk.filedialog.asksaveasfile(filetypes=[('Distributed Social Profile', '*.dsu')])
-        profile_filename = filename.name
-
-        # TODO Write code to perform whatever operations are necessary to prepare the UI for
-        # a new DSU file.
-        # HINT: You will probably need to do things like generate encryption keys and reset the ui.
+        self._profile_filename = filename.name
+        self._current_profile = NaClProfile()
+        self._current_profile.generate_keypair()
+        self.body.reset_ui()
     
     """
     Opens an existing DSU file when the 'Open' menu item is clicked and loads the profile
@@ -215,11 +217,14 @@ class MainApp(tk.Frame):
     """
     def open_profile(self):
         filename = tk.filedialog.askopenfile(filetypes=[('Distributed Social Profile', '*.dsu')])
+        self._profile_filename = filename.name
+        self._current_profile = NaClProfile()
+        self._current_profile.load_profile(self._profile_filename)
+        self._current_profile.import_keypair(self._current_profile.keypair)
+        self.body.reset_ui() # Reset UI
+        self.body.set_posts(self._current_profile.get_posts())
 
-        # TODO: Write code to perform whatever operations are necessary to prepare the UI for
-        # an existing DSU file.
-        # HINT: You will probably need to do things like load a profile, import encryption keys 
-        # and update the UI with posts.
+       
     
     """
     Closes the program when the 'Close' menu item is clicked.
@@ -238,25 +243,26 @@ class MainApp(tk.Frame):
         # clear the editor_entry UI for a new post.
         # This might also be a good place to check if the user has selected the online
         # checkbox and if so send the message to the server.
-        pass
+        post = Post(self.body.get_text_entry())
+        self.body.insert_post(post)
+
+        # Update current profile
+        self._current_profile.save_profile(self._profile_filename)
+        self.body.set_text_entry('')
 
     """
     A callback function for responding to changes to the online chk_button.
     """
-    def online_changed(self, value:bool):
-        # TODO: 
-        # 1. Remove the existing code. It has been left here to demonstrate
-        # how to change the text displayed in the footer_label widget and
-        # assist you with testing the callback functionality (if the footer_label
-        # text changes when you click the chk_button widget, your callback is working!).
-        # 2. Write code to support only sending posts to the DSU server when the online chk_button
-        # is checked.
-        
-        if value == 1:
+    def online_changed(self):
+        chk_value = self.footer.is_online.get()
+        if chk_value == 1:
             self.footer.set_status("Online")
+            self._is_online = True
         else:
             self.footer.set_status("Offline")
-    
+            self._is_online = False
+
+
     """
     Call only once, upon initialization to add widgets to root frame
     """
@@ -277,12 +283,9 @@ class MainApp(tk.Frame):
         # The Body and Footer classes must be initialized and packed into the root window.
         self.body = Body(self.root, self._current_profile)
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
-        
-        # TODO: Add a callback for detecting changes to the online checkbox widget in the Footer class. Follow
-        # the conventions established by the existing save_callback parameter.
-        # HINT: There may already be a class method that serves as a good callback function!
         self.footer = Footer(self.root, save_callback=self.save_profile, online_callback=self.online_changed)
         self.footer.pack(fill=tk.BOTH, side=tk.BOTTOM)
+
 
 if __name__ == "__main__":
     # All Tkinter programs start with a root window. We will name ours 'main'.
