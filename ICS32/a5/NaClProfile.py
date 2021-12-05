@@ -33,11 +33,14 @@ import copy
     
 class NaClProfile(Profile):
     # NaClProfile constructor
-    def __init__(self, dsuserver = None, keypair = None):
+    def __init__(self, dsuserver = None, keypair = None, username='d_username', password='d_password', bio='d_bio'):
         self.public_key = ''
         self.private_key = ''
         self.keypair = ''
-
+        self.username = username
+        self.password = password
+        self.bio = bio
+        
         if keypair != None:
             self.import_keypair(keypair)
         
@@ -104,9 +107,8 @@ class NaClProfile(Profile):
         post_entry = post.get_entry()
         encrypted_entry = self._encrypt(self.private_key, self.public_key, post_entry)
         post.set_entry(encrypted_entry) 
-
-        return super().add_post(post)
-
+        super().add_post(post)
+        
 
     # Override the get_posts method to decrypt post entries.
     def get_posts(self) -> list:
@@ -123,6 +125,8 @@ class NaClProfile(Profile):
     def load_profile(self, path: str) -> None:
         p = Path(path)
 
+        print("\nLOAD_PROFILE CALLED FROM NACLPROFILE\n")
+
         if os.path.exists(p) and p.suffix == '.dsu':
             try:
                 f = open(p, 'r')
@@ -134,7 +138,10 @@ class NaClProfile(Profile):
                 self.private_key = obj['private_key']
                 self.keypair = obj['keypair']
                 self.dsuserver = obj['dsuserver']
+                self.username = obj['username']
+                self.password = obj['password']
                 self.bio = obj['bio']
+                
                 for post_obj in obj['_posts']:
                     post = Post(post_obj['entry'], post_obj['timestamp'])
                     self._posts.append(post)

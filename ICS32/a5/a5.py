@@ -58,7 +58,10 @@ class Body(tk.Frame):
     Populates the self._posts attribute with posts from the active DSU file.
     """
     def set_posts(self, posts:list):
+        print("SET POSTS CALLED FROM BODY")
         self._posts = posts
+
+        print("POSTS: ", posts)
         for post in self._posts:
             self._insert_post_tree(len(self._posts), post)
 
@@ -66,9 +69,12 @@ class Body(tk.Frame):
     Inserts a single post to the post_tree widget.
     """
     def insert_post(self, post: Post):
+        print("\nPOST FROM INSERT_POST: ", post)
         self._posts.append(post)
         id = len(self._posts) - 1 #adjust id for 0-base of treeview widget
         self._insert_post_tree(id, post)
+
+        print("ALL POSTS: ", self._posts)
 
 
     """
@@ -205,7 +211,7 @@ class MainApp(tk.Frame):
     Creates a new DSU file when the 'New' menu item is clicked.
     """
     def new_profile(self):
-        filename = tk.filedialog.asksaveasfile(filetypes=[('Distributed Social Profile', '*.dsu')])
+        filename = tk.filedialog.asksaveasfile(filetypes=[('Distributed Social Profile', '*.dsu')], defaultextension='.dsu')
         self._profile_filename = filename.name
         self._current_profile = NaClProfile()
         self._current_profile.generate_keypair()
@@ -236,19 +242,32 @@ class MainApp(tk.Frame):
     Saves the text currently in the entry_editor widget to the active DSU file.
     """
     def save_profile(self):
-        # TODO: Write code to perform whatever operations are necessary to save a 
-        # post entry when the user clicks the save_button widget.
-        # HINT: You will probably need to do things like create a new Post object,
-        # fill it with text, add it to the active profile, save the profile, and
-        # clear the editor_entry UI for a new post.
-        # This might also be a good place to check if the user has selected the online
-        # checkbox and if so send the message to the server.
+
+        # Check for filename
+        if self._profile_filename is False:
+            print("No filename provided")
+            return
+
+        # Add posts to profile
         post = Post(self.body.get_text_entry())
         self.body.insert_post(post)
+        self._current_profile.add_post(post)
 
+        #print("\nCURRENT STATS:")
+        #print("CURRENT PROFILE TYPE: ", type(self._current_profile))
+        #print("CURRENT PROFILE FILENAME: ", self._profile_filename)
+        #print("CURRENT PROFILE POSTS: ", self._current_profile.get_posts())
+        #print("POST: ", post)
+        
         # Update current profile
         self._current_profile.save_profile(self._profile_filename)
         self.body.set_text_entry('')
+
+        # Check if online
+        if self._is_online:
+            print("SEND POST TO SERVER")
+
+            
 
     """
     A callback function for responding to changes to the online chk_button.
