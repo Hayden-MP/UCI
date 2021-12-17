@@ -1,5 +1,7 @@
 How to Operate Program:
 
+![](images/1.JPG)
+
 STEPS:
 
 1. Run gui.py.
